@@ -12,13 +12,24 @@ class PatientController extends Controller
 
     public function __construct(PatientService $patientService)
     {
-        $this->patientService = $patientService;
+         $this->patientService = $patientService;
+        
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json($this->patientService->getAll());
+        $search = $request->query('search'); // ← aquí se obtiene ?search=algo
+        $patient = $this->patientService->index($search);
+
+        if ($patient->isEmpty()) {
+            return response()->json([
+                'message' => 'No se encontró ningún paciente'
+            ], 404);
+        }
+
+        return response()->json($patient);
     }
+
 
     public function store(Request $request)
     {
@@ -30,6 +41,7 @@ class PatientController extends Controller
             'fecha_nacimiento' => 'nullable|date',
             'sexo' => 'nullable|string|in:M,F',
             'direccion' => 'nullable|string',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $patient = $this->patientService->create($data);
@@ -57,9 +69,30 @@ class PatientController extends Controller
         return response()->json($patient);
     }
 
+    public function uploadFoto(Request $request, $id)
+    {
+        $request->validate([
+            'foto' => 'required|image|max:2048'
+        ]);
+
+        return $this->patientService->subirFoto($id, $request->file('foto'));
+    }
+
+
     public function destroy($id)
     {
         $this->patientService->delete($id);
         return response()->json(null, 204);
     }
+
+    // public function searchPatient($search){
+    //     $pacientes = $this->patientService->index($search);
+
+    //     if ($pacientes->isEmpty()) {
+    //         return response()->json([
+    //             'message' => 'No se encontró ningún paciente'
+    //         ], 404);
+    //     }
+    //     return response()->json($pacientes);
+    // }
 }

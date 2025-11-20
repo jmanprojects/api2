@@ -17,5 +17,6 @@ class Patient extends Model
         'fecha_nacimiento',
         'sexo',
         'direccion',
+        'foto'
     ];
 }
