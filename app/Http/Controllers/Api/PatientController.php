@@ -32,21 +32,37 @@ class PatientController extends Controller
 
 
     public function store(Request $request)
-    {
-        $data = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'apellido' => 'required|string|max:255',
-            'email' => 'nullable|email|unique:patients',
-            'telefono' => 'nullable|string|max:20',
-            'fecha_nacimiento' => 'nullable|date',
-            'sexo' => 'nullable|string|in:M,F',
-            'direccion' => 'nullable|string',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        ]);
+{
+    $data = $request->validate([
+        'nombre' => 'required|string|max:255',
+        'apellido' => 'required|string|max:255',
+        'email' => 'nullable|email|unique:patients,email',
+        'telefono' => 'nullable|string|max:20',
+        'fecha_nacimiento' => 'nullable|date',
+        'sexo' => 'nullable|string|in:M,F',
+        'direccion' => 'nullable|string',
+        'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
 
-        $patient = $this->patientService->create($data);
-        return response()->json($patient, 201);
-    }
+    $patient = $this->patientService->create($data);
+    return response()->json($patient, 201);
+}
+    // public function store(Request $request)
+    // {
+    //     $data = $request->validate([
+    //         'nombre' => 'required|string|max:255',
+    //         'apellido' => 'required|string|max:255',
+    //         'email' => 'nullable|email|unique:patients',
+    //         'telefono' => 'nullable|string|max:20',
+    //         'fecha_nacimiento' => 'nullable|date',
+    //         'sexo' => 'nullable|string|in:M,F',
+    //         'direccion' => 'nullable|string',
+    //         'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    //     ]);
+
+    //     $patient = $this->patientService->create($data);
+    //     return response()->json($patient, 201);
+    // }
 
     public function show($id)
     {

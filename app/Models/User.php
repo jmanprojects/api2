@@ -22,13 +22,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'rol',
         'first_login',
-        'specialty',
-        'phone',
-        'clinic_name',
-        'clinic_logo',
-        'work_schedule',
-        'theme',
     ];
 
     /**
@@ -53,4 +48,28 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Relación 1 a 1: Un usuario tiene un médico
+     */
+    public function doctor()
+    {
+        return $this->hasOne(Doctor::class);
+    }
+
+    public function patient()
+    {
+        return $this->hasOne(Patient::class);
+    }
+
+
+    // public function patient() // o paciente()
+    // {
+    //     return $this->hasOne(Patient::class); // o Paciente::class
+    // }
+
+    // public function enfermero()
+    // {
+    //     return $this->hasOne(Enfermero::class);
+    // }
 }

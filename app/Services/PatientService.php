@@ -1,8 +1,10 @@
 <?php
 namespace App\Services;
 
+use App\Models\User;
 use App\Models\Patient;
-//use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 //use Illuminate\Validation\ValidationException;
 
 class PatientService
@@ -17,21 +19,62 @@ class PatientService
         return Patient::findOrFail($id);
     }
 
+
     public function create(array $data)
     {
-        // Manejo de la foto si viene
-        if (isset($data['foto']) && $data['foto'] instanceof \Illuminate\Http\UploadedFile) {
+        return DB::transaction(function () use ($data) {
 
-        // Guarda en storage/app/public/pacientes
-        $path = $data['foto']->store('patients', 'public');
+            // 1️ Crear usuario con rol paciente
+            $user = User::create([
+                'name'     => $data['nombre'],   
+                'email'    => $data['email'] ?? null,
+                'password' => Hash::make(str()->random(16)),  // clave temporal
+                'rol'      => 'paciente',
+            ]);
 
-        // Se guarda solo la ruta en la BD
-        $data['foto'] = $path;
-    }else{
-        $data['foto'] = 'patients/default_photo.png';
+            // 2️ Manejar la foto si viene
+            $fotoPath = null;
+            if (isset($data['foto'])) {
+                $fotoPath = $data['foto']->store('patients', 'public');
+            }else{
+                     $fotoPath= $data['foto'] = 'patients/default_photo.png';
+                }
+
+            // 3️ Crear registro paciente usando user_id
+            $patient = Patient::create([
+                'user_id'         => $user->id,
+                'nombre'          => $data['nombre'],
+                'apellido'        => $data['apellido'],
+                'email'           => $data['email'],
+                'telefono'        => $data['telefono'] ?? null,
+                'fecha_nacimiento'=> $data['fecha_nacimiento'] ?? null,
+                'sexo'            => $data['sexo'] ?? null,
+                'direccion'       => $data['direccion'] ?? null,
+                'foto'            => $fotoPath,
+            ]);
+
+            return [
+                'user'     => $user,
+                'patient'  => $patient,
+            ];
+        });
     }
-        return Patient::create($data);
-    }
+
+    // public function create(array $data)
+    // {
+    //     // Manejo de la foto si viene
+    //     if (isset($data['foto']) && $data['foto'] instanceof \Illuminate\Http\UploadedFile) {
+
+    //     // Guarda en storage/app/public/pacientes
+    //     $path = $data['foto']->store('patients', 'public');
+
+    //     // Se guarda solo la ruta en la BD
+    //     $data['foto'] = $path;
+    // }else{
+    //     $data['foto'] = 'patients/default_photo.png';
+    // }
+    //     return Patient::create($data);
+    // }
 
 
 

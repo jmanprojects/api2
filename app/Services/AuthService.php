@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
+
 
 class AuthService
 {
@@ -57,22 +59,76 @@ class AuthService
         return $user; // devilve todos los datos del usuario o se puede filtrar
     }
 
+
+//     public function register(array $data)
+// {
+//     // Crear el usuario
+//     $user = User::create([
+//         'name' => $data['name'],
+//         'email' => $data['email'],
+//         'password' => Hash::make($data['password']),
+//     ]);
+
+//     // Crear token automáticamente
+//     $token = $user->createToken('auth_token')->plainTextToken;
+
+//     return [
+//         'user' => $user,
+//         'token' => $token,
+//     ];
+// }
+
     //registrar nuevo usuario
     public function register(array $data)
     {
-        // Crear el usuario
+        
+    return DB::transaction(function () use ($data) {
+
+        // 1️ Crear el usuario
         $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
+            'name'     => $data['name'],
+            'email'    => $data['email'],
             'password' => Hash::make($data['password']),
+            'rol'      => $data['rol'], // NECESARIO AHORA
         ]);
 
-        // Crear token automáticamente
+        // 2️ Crear su perfil según rol
+        if ($user->rol === 'doctor') {
+            $user->doctor()->create([
+                'name'              => $data['name'] ?? null,
+                'last_name'              => $data['last_name'] ?? null,
+                'address'              => $data['address'] ?? null,
+                'phone'              => $data['phone'] ?? null,
+                'degree'              => $data['degree'] ?? null,
+                'speciality'         => $data['speciality'] ?? null,
+                'profesional_license'         => $data['profesional_license'] ?? null,
+                'photo'   => $data['photo'] ?? null,
+                'clinic_name' => $data['clinic_name'] ?? null,
+                'clinic_logo' => $data['clinic_logo'] ?? null,
+            ]);
+        }
+
+        // if ($user->rol === 'paciente') {
+        //     $user->paciente()->create([
+        //         'fecha_nacimiento' => $data['fecha_nacimiento'] ?? null,
+        //         'telefono'         => $data['telefono'] ?? null,
+        //     ]);
+        // }
+
+        // if ($user->rol === 'enfermero') {
+        //     $user->enfermero()->create([
+        //         'tipo' => $data['tipo'] ?? null,
+        //         // otros campos de enfermero
+        //     ]);
+        // }
+
+        // 3️ Crear token automáticamente
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return [
-            'user' => $user,
+            'user'  => $user,
             'token' => $token,
         ];
+    });
     }
 }
