@@ -3,91 +3,128 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreAppointmentRequest;
+use App\Http\Requests\UpdateAppointmentStatusRequest;
+use App\Models\Appointment;
+use App\Models\Patient;
 use App\Services\AppointmentService;
-
+use App\Services\DoctorService;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
 {
-    protected $appointmentService;
+    protected AppointmentService $appointmentService;
+    protected DoctorService $doctorService;
 
-    public function __construct(AppointmentService $appointmentService)
+    public function __construct(AppointmentService $appointmentService, DoctorService $doctorService)
     {
         $this->appointmentService = $appointmentService;
+        $this->doctorService      = $doctorService;
+
+        // $this->middleware('auth:sanctum');
+        // $this->middleware('role:doctor|nurse'); // si implementas roles
     }
 
-    public function index()
+    /**
+     * List appointments for the authenticated doctor in a date range.
+     * Route example: GET /api/appointments?from=2025-01-01&to=2025-01-31
+     */
+    public function index(Request $request): JsonResponse
     {
-        return response()->json($this->appointmentService->getAll());
+        $user   = $request->user();
+        $doctor = $this->doctorService->getDoctorForUser($user);
+
+        if (!$doctor) {
+            return response()->json([
+                'message' => 'Doctor profile not found for this user.',
+            ], 404);
+        }
+
+        $from = $request->query('from')
+            ? Carbon::parse($request->query('from'))
+            : now()->startOfDay();
+
+        $to = $request->query('to')
+            ? Carbon::parse($request->query('to'))
+            : now()->addDays(7)->endOfDay();
+
+        $appointments = $this->appointmentService->getAppointmentsForDoctor($doctor, $from, $to);
+
+        return response()->json([
+            'data' => $appointments,
+        ]);
     }
 
-    public function store(Request $request)
+    /**
+     * Create a new appointment for the authenticated doctor.
+     * Route: POST /api/appointments
+     */
+    public function store(StoreAppointmentRequest $request): JsonResponse
     {
-        $appointment = $this->appointmentService->create($request->all(), $request->user());
-        return response()->json($appointment, 201);
+        $user   = $request->user();
+        $doctor = $this->doctorService->getDoctorForUser($user);
+
+        if (!$doctor) {
+            return response()->json([
+                'message' => 'Doctor profile not found for this user.',
+            ], 404);
+        }
+
+        $data = $request->validated();
+
+        $patient = Patient::findOrFail($data['patient_id']);
+
+        try {
+            $appointment = $this->appointmentService->createAppointment(
+                $data,
+                $doctor,
+                $patient,
+                $data['consulting_room_id'],
+                $user->id
+            );
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Appointment created successfully.',
+            'data'    => $appointment,
+        ], 201);
     }
 
-    public function show($id)
+    /**
+     * Show a specific appointment.
+     * Route: GET /api/appointments/{appointment}
+     */
+    public function show(Appointment $appointment): JsonResponse
     {
-        return response()->json($this->appointmentService->find($id));
+        $appointment->load(['doctor.user', 'patient.user', 'consultingRoom', 'statusHistory']);
+
+        return response()->json([
+            'data' => $appointment,
+        ]);
     }
 
-    public function update(Request $request, $id)
+    /**
+     * Update the status of an appointment.
+     * Route: PUT /api/appointments/{appointment}/status
+     */
+    public function updateStatus(UpdateAppointmentStatusRequest $request, Appointment $appointment): JsonResponse
     {
-        $appointment = $this->appointmentService->update($id, $request->all());
-        return response()->json($appointment);
-    }
+        $user    = $request->user();
+        $data    = $request->validated();
+        $status  = $data['status'];
+        $reason  = $data['reason'] ?? null;
 
-    public function destroy($id)
-    {
-        $this->appointmentService->delete($id);
-        return response()->noContent();
+        $appointment = $this->appointmentService->changeStatus($appointment, $status, $user->id, $reason);
+
+        return response()->json([
+            'message' => 'Appointment status updated successfully.',
+            'data'    => $appointment,
+        ]);
     }
 }
-
-
-
-
-//class AppointmentController extends Controller
-//{
-    /**
-     * Display a listing of the resource.
-     */
-  //  public function index()
-   // {
-        //
-    //}
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    // public function store(Request $request)
-    // {
-      
-    // }
-
-    /**
-     * Display the specified resource.
-     */
-    // public function show(string $id)
-    // {
-    //     //
-    // }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    // public function update(Request $request, string $id)
-    // {
-    //     //
-    // }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-//     public function destroy(string $id)
-//     {
-//         //
-//     }
-// }
-

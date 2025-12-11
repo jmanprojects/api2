@@ -19,13 +19,13 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
 
-            // Nuevos campos para configuración inicial
-            $table->boolean('first_login')->default(true);
-            $table->string('specialty')->nullable();
-            $table->string('phone')->nullable()->index();
-            $table->string('clinic_name')->nullable();
-            $table->text('clinic_logo')->nullable(); // por si usas URL larga
-            $table->text('work_schedule')->nullable();
+             // Nuevos campos para configuración inicial
+            // $table->boolean('first_login')->default(true);
+            // $table->string('specialty')->nullable();
+            // $table->string('phone')->nullable()->index();
+            // $table->string('clinic_name')->nullable();
+            // $table->text('clinic_logo')->nullable(); 
+            // $table->text('work_schedule')->nullable();
             $table->string('theme')->default('light');
 
             // Tokens y autenticación

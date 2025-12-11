@@ -23,11 +23,6 @@ class User extends Authenticatable
         'email',
         'password',
         'first_login',
-        'specialty',
-        'phone',
-        'clinic_name',
-        'clinic_logo',
-        'work_schedule',
         'theme',
     ];
 
@@ -53,4 +48,52 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+        /**
+     * Relationship: a User has one Doctor profile.
+     *
+     * This creates the 1:1 link:
+     * users.id -> doctors.user_id
+     *
+     * Allows:
+     *   $user->doctor
+     *   $user->doctor()->create([...])
+     */
+    public function doctor()
+    {
+        return $this->hasOne(\App\Models\Doctor::class);
+    }
+
+        /**
+     * Relationship: a User has one Patient profile.
+     *
+     * This creates the 1:1 link:
+     * users.id -> patients.user_id
+     *
+     * Allows:
+     *   $user->patient
+     *   $user->patient()->create([...])
+     */
+    public function patient()
+    {
+        return $this->hasOne(\App\Models\Patient::class);
+    }
+
+        /**
+     * Relationship: a User has one Nurse profile.
+     *
+     * This creates the 1:1 link:
+     * users.id -> nurses.user_id
+     *
+     * Allows:
+     *   $user->nurse
+     *   $user->nurse()->create([...])
+     */
+    public function nurse()
+    {
+        return $this->hasOne(\App\Models\Nurse::class);
+    }
+
+
+
 }
