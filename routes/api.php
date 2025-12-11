@@ -3,6 +3,9 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\AppointmentController;
+use App\Http\Controllers\Api\UserController;
+
+
 
 
 
@@ -19,13 +22,22 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('patients', PatientController::class);
 
-    // Ruta personalizada para subir foto
+    // Ruta personalizada para subir foto para pacientes
     Route::post('patients/{id}/foto', [PatientController::class, 'uploadFoto']);
 });
 
+
+// ruta personalizada para citas
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('appointments', AppointmentController::class);
 });
+
+//actualizar la  contraseña
+Route::middleware('auth:sanctum')->group(function () {
+    Route::patch('/user/password', [UserController::class, 'updatePassword']);
+});
+
+
 
 
 
