@@ -12,6 +12,7 @@ use App\Services\DoctorService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Services\AppointmentQueryService;
 
 class AppointmentController extends Controller
 {
@@ -31,26 +32,41 @@ class AppointmentController extends Controller
      * List appointments for the authenticated doctor in a date range.
      * Route example: GET /api/appointments?from=2025-01-01&to=2025-01-31
      */
-    public function index(Request $request): JsonResponse
+    // public function index(Request $request): JsonResponse
+    // {
+    //     $user   = $request->user();
+    //     $doctor = $this->doctorService->getDoctorForUser($user);
+
+    //     if (!$doctor) {
+    //         return response()->json([
+    //             'message' => 'Doctor profile not found for this user.',
+    //         ], 404);
+    //     }
+
+    //     $from = $request->query('from')
+    //         ? Carbon::parse($request->query('from'))
+    //         : now()->startOfDay();
+
+    //     $to = $request->query('to')
+    //         ? Carbon::parse($request->query('to'))
+    //         : now()->addDays(7)->endOfDay();
+
+    //     $appointments = $this->appointmentService->getAppointmentsForDoctor($doctor, $from, $to);
+
+    //     return response()->json([
+    //         'data' => $appointments,
+    //     ]);
+    // }
+
+        public function index(Request $request, AppointmentQueryService $queryService)
     {
-        $user   = $request->user();
-        $doctor = $this->doctorService->getDoctorForUser($user);
+        // 1) Policy: ¿puede acceder al módulo?
+        $this->authorize('viewAny', Appointment::class);
 
-        if (!$doctor) {
-            return response()->json([
-                'message' => 'Doctor profile not found for this user.',
-            ], 404);
-        }
-
-        $from = $request->query('from')
-            ? Carbon::parse($request->query('from'))
-            : now()->startOfDay();
-
-        $to = $request->query('to')
-            ? Carbon::parse($request->query('to'))
-            : now()->addDays(7)->endOfDay();
-
-        $appointments = $this->appointmentService->getAppointmentsForDoctor($doctor, $from, $to);
+        // 2) Scoped query: SOLO lo que le pertenece al usuario
+        $appointments = $queryService
+            ->forUser($request->user())
+            ->paginate(15); // paginación pro para front
 
         return response()->json([
             'data' => $appointments,
