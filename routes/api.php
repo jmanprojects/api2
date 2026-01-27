@@ -18,6 +18,10 @@ use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\PrescriptionPdfController;
 
 
+use App\Http\Controllers\Api\DoctorController;
+use App\Http\Controllers\Api\NurseProfileController;
+
+
 
 
 // Registro y login
@@ -144,6 +148,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [MeController::class, 'show']);
     Route::put('/me/settings', [MeController::class, 'updateSettings']);
 
+        // Doctor self-profile (wizard)
+    Route::get('/doctors/me', [DoctorController::class, 'me']);
+    Route::put('/doctors/me', [DoctorController::class, 'update']);
+
+    // Nurse self-profile (wizard)
+    Route::get('/nurses/me', [NurseProfileController::class, 'me']);
+    Route::put('/nurses/me', [NurseProfileController::class, 'update']);
+
+
+
 
         
     // PDF (doctor only for MVP)
@@ -155,6 +169,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 });
+
 
 
 
