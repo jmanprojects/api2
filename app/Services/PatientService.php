@@ -12,24 +12,44 @@ class PatientService
         return Patient::all();
     }
 
-    public function getById($id)
+    // public function getById($id)
+    // {
+    //     return Patient::findOrFail($id);
+    // }
+
+        public function getById($id, $userId)
     {
-        return Patient::findOrFail($id);
+        return Patient::where('id', $id)
+                    ->where('user_id', $userId)
+                    ->firstOrFail();
     }
 
-    public function create(array $data)
+    // public function create(array $data)
+    // {
+    //     // Manejo de la foto si viene
+    //     if (isset($data['foto']) && $data['foto'] instanceof \Illuminate\Http\UploadedFile) {
+
+    //     // Guarda en storage/app/public/pacientes
+    //     $path = $data['foto']->store('patients', 'public');
+
+    //     // Se guarda solo la ruta en la BD
+    //     $data['foto'] = $path;
+    // }else{
+    //     $data['foto'] = 'patients/default_photo.png';
+    // }
+    //     return Patient::create($data);
+    // }
+        public function create(array $data, $userId)
     {
-        // Manejo de la foto si viene
+        // manejo de foto igual que antes...
         if (isset($data['foto']) && $data['foto'] instanceof \Illuminate\Http\UploadedFile) {
+            $path = $data['foto']->store('patients', 'public');
+            $data['foto'] = $path;
+        } else {
+            $data['foto'] = 'patients/default_photo.png';
+        }
 
-        // Guarda en storage/app/public/pacientes
-        $path = $data['foto']->store('patients', 'public');
-
-        // Se guarda solo la ruta en la BD
-        $data['foto'] = $path;
-    }else{
-        $data['foto'] = 'patients/default_photo.png';
-    }
+        $data['user_id'] = $userId;  // ← aquí se asigna el médico
         return Patient::create($data);
     }
 
@@ -84,19 +104,35 @@ class PatientService
         return $patient->delete();
     }
 
-    public function index($search = null)
+    // public function index($search = null)
+    // {
+    //     if ($search && trim($search) !== '') {
+    //         $searchTerm = strtolower(trim($search));
+    
+    //         $patient = Patient::whereRaw("LOWER(CONCAT(nombre, ' ', apellido)) LIKE ?", ["%{$searchTerm}%"])
+    //             ->orWhereRaw("LOWER(CONCAT(apellido, ' ', nombre)) LIKE ?", ["%{$searchTerm}%"])
+    //             ->get();
+    
+    //         return $patient;
+    //     }
+    
+    //     return Patient::all();
+    // }
+
+        public function index($search = null, $userId)
     {
+        $query = Patient::where('user_id', $userId);
+
         if ($search && trim($search) !== '') {
             $searchTerm = strtolower(trim($search));
-    
-            $patient = Patient::whereRaw("LOWER(CONCAT(nombre, ' ', apellido)) LIKE ?", ["%{$searchTerm}%"])
-                ->orWhereRaw("LOWER(CONCAT(apellido, ' ', nombre)) LIKE ?", ["%{$searchTerm}%"])
-                ->get();
-    
-            return $patient;
+            $query->whereRaw("LOWER(CONCAT(nombre, ' ', apellido)) LIKE ?", ["%{$searchTerm}%"])
+                ->orWhere(function($q) use ($searchTerm, $userId) {
+                    $q->where('user_id', $userId)
+                        ->whereRaw("LOWER(CONCAT(apellido, ' ', nombre)) LIKE ?", ["%{$searchTerm}%"]);
+                });
         }
-    
-        return Patient::all();
+
+        return $query->get();
     }
     
 

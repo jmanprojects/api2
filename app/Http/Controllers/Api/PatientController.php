@@ -16,41 +16,76 @@ class PatientController extends Controller
         
     }
 
-    public function index(Request $request)
+    // public function index(Request $request)
+    // {
+    //     $search = $request->query('search'); // ← aquí se obtiene ?search=algo
+    //     $patient = $this->patientService->index($search);
+
+    //     if ($patient->isEmpty()) {
+    //         return response()->json([
+    //             'message' => 'No se encontró ningún paciente'
+    //         ], 404);
+    //     }
+
+    //     return response()->json($patient);
+    // }
+        public function index(Request $request)
     {
-        $search = $request->query('search'); // ← aquí se obtiene ?search=algo
-        $patient = $this->patientService->index($search);
+        $search = $request->query('search');
+        $patient = $this->patientService->index($search, $request->user()->id);
 
         if ($patient->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontró ningún paciente'
-            ], 404);
+            return response()->json(['message' => 'No se encontró ningún paciente'], 404);
         }
 
         return response()->json($patient);
     }
 
 
-    public function store(Request $request)
+
+    // public function store(Request $request)
+    // {
+    //     $data = $request->validate([
+    //         'nombre' => 'required|string|max:255',
+    //         'apellido' => 'required|string|max:255',
+    //         'email' => 'nullable|email|unique:patients',
+    //         'telefono' => 'nullable|string|max:20',
+    //         'fecha_nacimiento' => 'nullable|date',
+    //         'sexo' => 'nullable|string|in:M,F',
+    //         'direccion' => 'nullable|string',
+    //         'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    //     ]);
+
+    //     $patient = $this->patientService->create($data);
+    //     return response()->json($patient, 201);
+    // }
+
+        public function store(Request $request)
     {
         $data = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'apellido' => 'required|string|max:255',
-            'email' => 'nullable|email|unique:patients',
-            'telefono' => 'nullable|string|max:20',
+            'nombre'           => 'required|string|max:255',
+            'apellido'         => 'required|string|max:255',
+            'email'            => 'nullable|email|unique:patients',
+            'telefono'         => 'nullable|string|max:20',
             'fecha_nacimiento' => 'nullable|date',
-            'sexo' => 'nullable|string|in:M,F',
-            'direccion' => 'nullable|string',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'sexo'             => 'nullable|string|in:M,F',
+            'direccion'        => 'nullable|string',
+            'foto'             => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $patient = $this->patientService->create($data);
+        $patient = $this->patientService->create($data, $request->user()->id);
         return response()->json($patient, 201);
     }
 
-    public function show($id)
+
+    // public function show($id)
+    // {
+    //     return response()->json($this->patientService->getById($id));
+    // }
+
+        public function show(Request $request, $id)
     {
-        return response()->json($this->patientService->getById($id));
+        return response()->json($this->patientService->getById($id, $request->user()->id));
     }
 
     public function update(Request $request, $id)
